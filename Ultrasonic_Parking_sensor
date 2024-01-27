@@ -1,3 +1,10 @@
+
+
+*Ultrasonic Parking*
+
+This project is made using ultrasonic sensor, arduino uno , LED x3 and 220ohm x3 .
+
+
 const int trigPin = 10;    // Trigger pin of ultrasonic sensor
 const int echoPin = 9;   // Echo pin of ultrasonic sensor
 const int greenLED = 11;   // Green LED pin

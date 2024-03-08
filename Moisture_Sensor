@@ -1,0 +1,87 @@
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <ESP8266WebServer.h>
+
+const char *ssid = "Arun"; // replace with your WiFi SSID
+const char *pass = "7892917641"; // replace with your WiFi password
+const char *apiKey = "9JEGX3KSJPJEONP2"; // Enter your Write API key from ThingSpeak
+
+const char *server = "api.thingspeak.com";
+const int MOISTURE_PIN = A0; // Analog pin connected to the moisture sensor
+
+WiFiClient client;
+
+int dryValue = 2; // Value when the sensor is completely dry
+int wetValue = 16; // Value when the sensor is completely wet
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(MOISTURE_PIN, INPUT);
+
+  WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.print("Connected to ");
+  Serial.println(ssid);
+  Serial.println(WiFi.localIP());
+
+  // Perform calibration
+  dryValue = calibrateDry();
+  wetValue = calibrateWet();
+}
+
+void loop() {
+  const int httpPort = 80; // Correct variable name
+  if (!client.connect(server, httpPort)) { // Fixing syntax error and using proper variable name
+    Serial.println("Connection Failed");
+    delay(300);
+    return;
+  }
+
+  int moistureValue = analogRead(MOISTURE_PIN);
+
+  // Convert the raw sensor value to a percentage
+  // int moisturePercentage = map(moistureValue, dryValue, wetValue, 0, 100);
+  String SM = String(moistureValue); // Declaring and fixing variable assignment
+
+  // Send data to ThingSpeak
+  sendDataToThingSpeak(SM);
+
+  delay(15000); // Adjust as needed
+}
+
+int calibrateDry() {
+  // Place the sensor in completely dry environment
+  // Wait for the reading to stabilize
+  // Return the stabilized sensor value
+  return analogRead(MOISTURE_PIN);
+}
+
+int calibrateWet() {
+  // Place the sensor in completely wet environment
+  // Wait for the reading to stabilize
+  // Return the stabilized sensor value
+  return analogRead(MOISTURE_PIN);
+}
+
+void sendDataToThingSpeak(String moisturePercentage) { // Change argument type to String
+  if (client.connect(server, 80)) {
+    String postStr = "field1=" + moisturePercentage; // No need to convert String to String
+    postStr += "\r\n";
+
+    client.print("POST /update HTTP/1.1\n");
+    client.print("Host: api.thingspeak.com\n");
+    client.print("Connection: close\n");
+    client.print("X-THINGSPEAKAPIKEY: " + String(apiKey) + "\n");
+    client.print("Content-Type: application/x-www-form-urlencoded\n");
+    client.print("Content-Length: ");
+    client.print(postStr.length());
+    client.print("\n\n");
+    client.print(postStr);
+  }
+
+  client.stop();
+}
